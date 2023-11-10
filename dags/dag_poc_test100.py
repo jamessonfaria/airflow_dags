@@ -2,7 +2,7 @@ from airflow import DAG
 from position_fields_operator import PositionFieldsOperator
 from datetime import datetime
 
-dag = DAG('dag_poc_test100', description="DAG POC Test1", 
+dag = DAG('dag_poc_test100', description="DAG POC Test 100", 
             schedule_interval=None, start_date=datetime(2023,3,5),
             catchup=False)
 
