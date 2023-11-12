@@ -1,6 +1,5 @@
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
-from airflow.providers.amazon.aws.hooks.s3 import S3Hook 
 from airflow.models import Variable
 import pandas as pd
 import json
@@ -10,13 +9,14 @@ import os
 class PositionFieldsOperator(BaseOperator):
 
     @apply_defaults
-    def __init__(self, output_file, position_fields, 
-                 have_header=False, *args, **kwars) -> None:
+    def __init__(self, output_file, position_fields=None, position_fields_tab=False, 
+                 remove_header=False, *args, **kwars) -> None:
 
         super().__init__(*args, **kwars)
         self.output_file = output_file
         self.position_fields = position_fields
-        self.have_header = have_header
+        self.position_fields_tab = position_fields_tab
+        self.remove_header = remove_header
 
     def get_path_file(self):
         temp_dir = tempfile.mkdtemp()
@@ -24,14 +24,25 @@ class PositionFieldsOperator(BaseOperator):
 
     def get_fields(self, lin):
        return [lin[start:end].strip() for start, end in self.position_fields]
-      
-    def transform_data(self, **kwarg):
-        input_path_file = Variable.get("input_path_file")
-        skip_rows = 1 if self.have_header else 0
-        df = pd.read_csv(input_path_file, header=None, skiprows=skip_rows)
 
-        df['fields'] = df[0].apply(self.get_fields)
+    def get_df_transformed(self):
+        input_path_file = Variable.get("input_path_file")
+        encoding_file = Variable.get("encoding_file")
+        skip_rows = 1 if self.remove_header else 0
+        
+        if self.position_fields_tab:
+            df = pd.read_csv(input_path_file, header=None, skiprows=skip_rows, 
+                         encoding=encoding_file, delimiter='\t')
+            df['fields'] = df.apply(list, axis=1)
+        else:
+            df = pd.read_csv(input_path_file, header=None, skiprows=skip_rows, 
+                         encoding=encoding_file)
+            df['fields'] = df[0].apply(self.get_fields)
         df['row'] = df.index + 1
+        return df
+
+    def transform_data(self, **kwarg):
+        df = self.get_df_transformed()
 
         data_dict = df[['row', 'fields']].to_dict(orient='records')
 
