@@ -41,13 +41,5 @@ class PositionFieldsOperator(BaseOperator):
         with open(output_path_file, 'w') as json_file:
             json.dump(data_dict, json_file, indent=4)
 
-        # json_output = json.dumps(data_dict, indent=4)
-
-        # s3 = S3Hook(aws_conn_id="aws_s3_connection")
-        # s3.load_string(string_data=json_output, 
-        #              key=f"data/output/{self.output_file}", 
-        #              bucket_name="brsp-airflow-prudential-s3", 
-        #              replace=True)
-
     def execute(self, context):
         self.transform_data()
