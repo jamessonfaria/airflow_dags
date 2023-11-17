@@ -4,6 +4,7 @@ import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
 import time
+from airflow.models import Variable
 
 
 class GlueJobRunnerOperator(BaseOperator):
@@ -29,9 +30,9 @@ class GlueJobRunnerOperator(BaseOperator):
         self.job_name = job_name
         self.job_timeout = job_timeout
         self.check_interval = check_interval
-        self.session = boto3.session.Session(region_name='us-east-1',  
-                                            aws_access_key_id="<< ACCESS KEY >>",
-                                            aws_secret_access_key="<< ACCESS SECRET >>")
+        self.session = boto3.session.Session(region_name=Variable.get("aws_region_name"),
+                                            aws_access_key_id=Variable.get("aws_access_key"),
+                                            aws_secret_access_key=Variable.get("aws_access_secret"))
         self.glue_client = self.session.client("glue")
         self.start_time = None
         self.job_run_id = None
